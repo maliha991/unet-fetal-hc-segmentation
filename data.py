@@ -5,6 +5,8 @@ import os
 import glob
 import skimage.io as io
 import skimage.transform as trans
+from skimage import img_as_float
+import cv2
 
 Sky = [128,128,128]
 Building = [128,0,0]
