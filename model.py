@@ -3,6 +3,7 @@ import os
 import skimage.io as io
 import skimage.transform as trans
 import numpy as np
+import tensorflow as tf
 from keras.models import *
 from keras.layers import *
 from keras.optimizers import *
@@ -53,14 +54,21 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv9)
 
     model = Model(inputs = inputs, outputs = conv10)
+    opt = tf.keras.optimizers.Adam(lr = 1e-4)
     
     def dice_coefficient(y_true, y_pred, smooth = 1 ):
         y_true_f = keras.flatten(y_true)
         y_pred_f = keras.flatten(y_pred)
         intersection = keras.sum(y_true_f * y_pred_f)
         return (2. * intersection + smooth) / (keras.sum(y_true_f) + keras.sum(y_pred_f) + smooth)
-
-    model.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy', dice_coefficient])
+    
+    def iou_coef(y_true, y_pred, smooth=1):
+        intersection = keras.sum(keras.abs(y_true * y_pred), axis=[1,2,3])
+        union = keras.sum(y_true,[1,2,3])+keras.sum(y_pred,[1,2,3])-intersection
+        iou = keras.mean((intersection + smooth) / (union + smooth), axis=0)
+        return iou
+    
+    model.compile(optimizer = opt, loss = 'binary_crossentropy', metrics = ['accuracy', dice_coefficient, iou_coef])
     
     #model.summary()
 
@@ -68,5 +76,4 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     	model.load_weights(pretrained_weights)
 
     return model
-
 
