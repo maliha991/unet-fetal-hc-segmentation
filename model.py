@@ -68,7 +68,10 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
         iou = keras.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
     
-    model.compile(optimizer = opt, loss = 'binary_crossentropy', metrics = ['accuracy', dice_coefficient, iou_coef])
+    def dice_loss(y_true, y_pred):
+        return 1 - dice_coefficient(y_true, y_pred)
+    
+    model.compile(optimizer = opt, loss = dice_loss, metrics = ['accuracy', dice_coefficient, iou_coef])
     
     #model.summary()
 
